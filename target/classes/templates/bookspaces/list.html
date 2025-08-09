@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookspaces - BookClub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/dashboard}">BookClub</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/search}">Find Friends</a>
+            <span class="navbar-text me-3" th:text="'Welcome, ' + ${user.username}">Welcome, User</span>
+            <a class="nav-link" th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Bookspaces</h2>
+        <a th:href="@{/bookspaces/new}" class="btn btn-primary">Create New Bookspace</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(bookspaces)}" class="alert alert-info text-center">
+        <h4>No bookspaces yet!</h4>
+        <p>Create your first bookspace to start sharing your thoughts on books, papers, or any topic.</p>
+        <a th:href="@{/bookspaces/new}" class="btn btn-primary">Create Your First Bookspace</a>
+    </div>
+
+    <div class="row">
+        <div th:each="bookspace : ${bookspaces}" class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${bookspace.title}">Bookspace Title</h5>
+                    <p class="card-text" th:text="${bookspace.description ?: 'No description'}">Description</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Created: <span th:text="${#temporals.format(bookspace.createdAt, 'MMM dd, yyyy')}">Date</span>
+                        </small>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a th:href="@{'/bookspaces/' + ${bookspace.id}}" class="btn btn-primary btn-sm">View Posts</a>
+                    <a th:href="@{'/bookspaces/' + ${bookspace.id} + '/posts/new'}" class="btn btn-outline-primary btn-sm">Add Post</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

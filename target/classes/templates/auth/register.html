@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - BookClub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Join BookClub</h2>
+
+                    <!-- Error message -->
+                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                    <!-- Registration form -->
+                    <form th:action="@{/register}" th:object="${user}" method="post">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control"
+                                   th:field="*{username}"
+                                   th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''"
+                                   id="username" required>
+                            <div th:if="${#fields.hasErrors('username')}" class="invalid-feedback">
+                                <p th:each="error : ${#fields.errors('username')}" th:text="${error}"></p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control"
+                                   th:field="*{email}"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                                   id="email" required>
+                            <div th:if="${#fields.hasErrors('email')}" class="invalid-feedback">
+                                <p th:each="error : ${#fields.errors('email')}" th:text="${error}"></p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control"
+                                   th:field="*{password}"
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                                   id="password" required>
+                            <div th:if="${#fields.hasErrors('password')}" class="invalid-feedback">
+                                <p th:each="error : ${#fields.errors('password')}" th:text="${error}"></p>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Create Account</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a th:href="@{/login}">Sign in here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
