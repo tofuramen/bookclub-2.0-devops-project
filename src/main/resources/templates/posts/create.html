@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Create Post in ' + ${bookspace.title} + ' - BookClub'">Create Post - BookClub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/dashboard}">BookClub</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/bookspaces}">My Bookspaces</a>
+            <a class="nav-link" th:href="@{/search}">Find Friends</a>
+            <span class="navbar-text me-3" th:if="${currentUser}" th:text="'Welcome, ' + ${currentUser.username}">Welcome, User</span>
+            <a class="nav-link" th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Bookspace Context -->
+            <div class="card mb-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Creating post in:</h6>
+                    <h5 class="card-title mb-1" th:text="${bookspace.title}">Bookspace Title</h5>
+                    <p class="card-text small mb-0" th:if="${bookspace.description}" th:text="${bookspace.description}">Bookspace description</p>
+                </div>
+            </div>
+
+            <!-- Create Post Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Create New Post</h3>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{'/bookspaces/' + ${bookspace.id} + '/posts/new'}"
+                          th:object="${post}"
+                          method="post">
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text"
+                                   class="form-control"
+                                   th:class="${#fields.hasErrors('title')} ? 'form-control is-invalid' : 'form-control'"
+                                   id="title"
+                                   th:field="*{title}"
+                                   placeholder="Enter post title"
+                                   maxlength="200">
+                            <div th:if="${#fields.hasErrors('title')}" class="invalid-feedback">
+                                <span th:errors="*{title}">Title error</span>
+                            </div>
+                            <div class="form-text">Maximum 200 characters</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                            <textarea class="form-control"
+                                      th:class="${#fields.hasErrors('content')} ? 'form-control is-invalid' : 'form-control'"
+                                      id="content"
+                                      th:field="*{content}"
+                                      rows="12"
+                                      placeholder="Share your thoughts, reviews, or insights..."></textarea>
+                            <div th:if="${#fields.hasErrors('content')}" class="invalid-feedback">
+                                <span th:errors="*{content}">Content error</span>
+                            </div>
+                            <div class="form-text">Use this space to share your detailed thoughts, book reviews, or discussions</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a th:href="@{'/bookspaces/' + ${bookspace.id}}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Publish Post</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Writing Tips -->
+            <div class="mt-4">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">Writing Tips</h6>
+                    <ul class="mb-0 small">
+                        <li>Share your genuine thoughts and experiences</li>
+                        <li>Include specific examples or quotes if discussing a book</li>
+                        <li>Consider what questions or discussions you'd like to spark</li>
+                        <li>Feel free to include personal reflections and insights</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mt-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/dashboard}">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/bookspaces}">My Bookspaces</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{'/bookspaces/' + ${bookspace.id}}" th:text="${bookspace.title}">Bookspace</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">New Post</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
