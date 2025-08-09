@@ -1,10 +1,10 @@
 package bookclub.devops.webapp.controller;
 
-import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.entity.Bookspace;
-import bookclub.devops.webapp.service.UserService;
+import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.service.BookspaceService;
-import org.springframework.beans.factory.annotation.Autowired;
+import bookclub.devops.webapp.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,17 +12,20 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import jakarta.validation.Valid;
+
 import java.util.Optional;
 
 @Controller
 public class CreateBookspacePageController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private BookspaceService bookspaceService;
+    private final BookspaceService bookspaceService;
+
+    public CreateBookspacePageController(UserService userService, BookspaceService bookspaceService) {
+        this.userService = userService;
+        this.bookspaceService = bookspaceService;
+    }
 
     @GetMapping("/bookspaces/new")
     public String createBookspacePage(Authentication authentication, Model model) {

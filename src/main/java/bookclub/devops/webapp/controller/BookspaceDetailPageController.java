@@ -1,31 +1,34 @@
 package bookclub.devops.webapp.controller;
 
-import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.entity.Bookspace;
 import bookclub.devops.webapp.entity.Post;
-import bookclub.devops.webapp.service.UserService;
+import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.service.BookspaceService;
 import bookclub.devops.webapp.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
+import bookclub.devops.webapp.service.UserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+
 import java.util.List;
 import java.util.Optional;
 
 @Controller
 public class BookspaceDetailPageController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private BookspaceService bookspaceService;
+    private final BookspaceService bookspaceService;
 
-    @Autowired
-    private PostService postService;
+    private final PostService postService;
+
+    public BookspaceDetailPageController(UserService userService, BookspaceService bookspaceService, PostService postService) {
+        this.userService = userService;
+        this.bookspaceService = bookspaceService;
+        this.postService = postService;
+    }
 
     @GetMapping("/bookspaces/{id}")
     public String bookspaceDetailPage(@PathVariable Long id,

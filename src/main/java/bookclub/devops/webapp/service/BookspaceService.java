@@ -3,7 +3,6 @@ package bookclub.devops.webapp.service;
 import bookclub.devops.webapp.entity.Bookspace;
 import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.repository.BookspaceRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -11,8 +10,11 @@ import java.util.Optional;
 @Service
 public class BookspaceService {
 
-    @Autowired
-    private BookspaceRepository bookspaceRepository;
+    private final BookspaceRepository bookspaceRepository;
+
+    public BookspaceService(BookspaceRepository bookspaceRepository) {
+        this.bookspaceRepository = bookspaceRepository;
+    }
 
     // Create new bookspace
     public Bookspace createBookspace(String title, String description, User owner) {

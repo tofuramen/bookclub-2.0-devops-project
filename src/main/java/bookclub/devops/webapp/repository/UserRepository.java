@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Get friend count
     @Query("SELECT COUNT(f) FROM Friendship f WHERE f.user.id = :userId")
     Long countFriendsByUserId(@Param("userId") Long userId);
+
+    List<User> findByEmailContainingIgnoreCase(String email);
 }

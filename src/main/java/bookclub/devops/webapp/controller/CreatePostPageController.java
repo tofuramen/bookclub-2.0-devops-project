@@ -1,12 +1,12 @@
 package bookclub.devops.webapp.controller;
 
-import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.entity.Bookspace;
 import bookclub.devops.webapp.entity.Post;
-import bookclub.devops.webapp.service.UserService;
+import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.service.BookspaceService;
 import bookclub.devops.webapp.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
+import bookclub.devops.webapp.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,20 +15,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import jakarta.validation.Valid;
+
 import java.util.Optional;
 
 @Controller
 public class CreatePostPageController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private BookspaceService bookspaceService;
+    private final BookspaceService bookspaceService;
 
-    @Autowired
-    private PostService postService;
+    private final PostService postService;
+
+    public CreatePostPageController(UserService userService, BookspaceService bookspaceService, PostService postService) {
+        this.userService = userService;
+        this.bookspaceService = bookspaceService;
+        this.postService = postService;
+    }
 
     @GetMapping("/bookspaces/{bookspaceId}/posts/new")
     public String createPostPage(@PathVariable Long bookspaceId,

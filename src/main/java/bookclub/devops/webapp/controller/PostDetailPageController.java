@@ -1,13 +1,13 @@
 package bookclub.devops.webapp.controller;
 
 
-import bookclub.devops.webapp.entity.User;
-import bookclub.devops.webapp.entity.Post;
 import bookclub.devops.webapp.entity.Comment;
-import bookclub.devops.webapp.service.UserService;
-import bookclub.devops.webapp.service.PostService;
+import bookclub.devops.webapp.entity.Post;
+import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import bookclub.devops.webapp.service.PostService;
+import bookclub.devops.webapp.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,21 +16,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.Optional;
 
 @Controller
 public class PostDetailPageController {
 
-    @Autowired
-    private UserService userService;
 
-    @Autowired
-    private PostService postService;
+    private final UserService userService;
 
-    @Autowired
-    private CommentService commentService;
+    private final PostService postService;
+
+    private final CommentService commentService;
+
+    public PostDetailPageController(UserService userService, PostService postService, CommentService commentService) {
+        this.userService = userService;
+        this.postService = postService;
+        this.commentService = commentService;
+    }
+
 
     @GetMapping("/posts/{id}")
     public String postDetailPage(@PathVariable Long id,

@@ -1,31 +1,32 @@
 package bookclub.devops.webapp.controller;
 
-import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.entity.Bookspace;
-import bookclub.devops.webapp.service.UserService;
+import bookclub.devops.webapp.entity.User;
 import bookclub.devops.webapp.service.BookspaceService;
 import bookclub.devops.webapp.service.FriendshipService;
-import org.springframework.beans.factory.annotation.Autowired;
+import bookclub.devops.webapp.service.UserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+
 import java.util.List;
 import java.util.Optional;
 
 @Controller
 public class UserProfilePageController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final BookspaceService bookspaceService;
+    private final FriendshipService friendshipService;
 
-    @Autowired
-    private BookspaceService bookspaceService;
-
-    @Autowired
-    private FriendshipService friendshipService;
+    public UserProfilePageController(UserService userService, BookspaceService bookspaceService, FriendshipService friendshipService) {
+        this.userService = userService;
+        this.bookspaceService = bookspaceService;
+        this.friendshipService = friendshipService;
+    }
 
     @GetMapping("/users/{username}")
     public String userProfilePage(@PathVariable String username, Authentication authentication, Model model) {

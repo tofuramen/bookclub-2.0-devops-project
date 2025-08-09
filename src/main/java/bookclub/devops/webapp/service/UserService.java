@@ -1,25 +1,25 @@
 package bookclub.devops.webapp.service;
 
 import bookclub.devops.webapp.entity.User;
-import bookclub.devops.webapp.repository.UserRepository;
 import bookclub.devops.webapp.repository.FriendshipRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import bookclub.devops.webapp.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final FriendshipRepository friendshipRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private FriendshipRepository friendshipRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserService(UserRepository userRepository, FriendshipRepository friendshipRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.friendshipRepository = friendshipRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     // User registration
     public User registerUser(String username, String email, String password) {
@@ -54,9 +54,17 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // Search users by username
+    // Search users by username or email
     public List<User> searchUsers(String query) {
-        return userRepository.findByUsernameContainingIgnoreCase(query);
+        // Search by both username and email, combine results and remove duplicates
+        List<User> usersByUsername = userRepository.findByUsernameContainingIgnoreCase(query);
+        List<User> usersByEmail = userRepository.findByEmailContainingIgnoreCase(query);
+
+        // Combine and deduplicate
+        Set<User> uniqueUsers = new HashSet<>(usersByUsername);
+        uniqueUsers.addAll(usersByEmail);
+
+        return new ArrayList<>(uniqueUsers);
     }
 
     // Get user's friends

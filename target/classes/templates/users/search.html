@@ -1,10 +1,288 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Friends - BookClub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/dashboard}">BookClub</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/bookspaces}">My Bookspaces</a>
+            <a class="nav-link active" th:href="@{/search}">Find Friends</a>
+            <span class="navbar-text me-3" th:if="${currentUser}" th:text="'Welcome, ' + ${currentUser.username}">Welcome, User</span>
+            <a class="nav-link" th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
 
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Search Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-search me-2"></i>Find Friends</h2>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/search}" method="get">
+                        <div class="row g-3">
+                            <div class="col-md-10">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text"
+                                           class="form-control form-control-lg"
+                                           name="q"
+                                           th:value="${query}"
+                                           placeholder="Search for users by username or email..."
+                                           maxlength="100">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            <div th:if="${query != null and !query.isEmpty()}">
+
+                <!-- Results Header -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">
+                        Search Results for "<span th:text="${query}" class="text-primary">query</span>"
+                    </h4>
+                    <span class="badge bg-secondary" th:text="${users != null ? #lists.size(users) : 0} + ' result(s)'">0 results</span>
+                </div>
+
+                <!-- No Results -->
+                <div th:if="${users == null or #lists.isEmpty(users)}" class="alert alert-info text-center">
+                    <i class="fas fa-user-slash fa-3x mb-3"></i>
+                    <h5>No users found</h5>
+                    <p class="mb-0">Try searching with a different username or email address.</p>
+                </div>
+
+                <!-- Results List -->
+                <div th:unless="${users == null or #lists.isEmpty(users)}">
+                    <div class="row">
+                        <div th:each="user : ${users}" class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user text-white fa-lg"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="card-title mb-1" th:text="${user.username}">Username</h5>
+                                            <p class="card-text text-muted small mb-0" th:text="${user.email}">Email</p>
+                                        </div>
+                                    </div>
+
+                                    <div th:if="${user.bio != null and !user.bio.isEmpty()}" class="mb-3">
+                                        <p class="card-text small" th:text="${#strings.abbreviate(user.bio, 80)}">User bio...</p>
+                                    </div>
+
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <div class="small text-muted">Books Read</div>
+                                            <div class="fw-bold" th:text="${user.booksReadCount ?: 0}">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Joined</div>
+                                            <div class="fw-bold" th:text="${#temporals.format(user.createdAt, 'MMM yyyy')}">Date</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-light">
+                                    <div class="d-grid gap-2 d-md-flex">
+                                        <a th:href="@{'/users/' + ${user.username}}" class="btn btn-outline-primary btn-sm flex-fill">
+                                            <i class="fas fa-eye me-1"></i>View Profile
+                                        </a>
+                                        <button class="btn btn-success btn-sm flex-fill friend-btn"
+                                                onclick="sendFriendRequest(this)"
+                                                th:data-user-id="${user.id}"
+                                                th:data-username="${user.username}">
+                                            <i class="fas fa-user-plus me-1"></i>Add Friend
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Tips -->
+            <div th:if="${query == null or query.isEmpty()}" class="mt-4">
+                <div class="alert alert-light">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-lightbulb me-2"></i>Search Tips
+                    </h5>
+                    <ul class="mb-0">
+                        <li>Search by username to find specific users</li>
+                        <li>Search by email address (partial matches work too)</li>
+                        <li>Use part of a name or email for broader results</li>
+                        <li>Search is case-insensitive</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-users me-2"></i>Build Your Reading Community
+                    </h5>
+                    <p class="mb-0">Connect with fellow readers, discover new books through their recommendations, and engage in meaningful discussions about literature.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Get CSRF token for Spring Security
+    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    function sendFriendRequest(button) {
+        const userId = button.getAttribute('data-user-id');
+        const username = button.getAttribute('data-username');
+
+        // Disable button and show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+
+        // Try AJAX first, fallback to form submission
+        fetch('/api/friends/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                [header]: token
+            },
+            body: JSON.stringify({userId: parseInt(userId)})
+        })
+            .then(response => {
+                if (!response.ok) {
+                    // If REST endpoint doesn't exist, fallback to form submission
+                    if (response.status === 404) {
+                        fallbackToFormSubmission(username, button);
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.success) {
+                    button.innerHTML = '<i class="fas fa-check me-1"></i>Friends';
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-secondary');
+
+                    // Show success message
+                    showAlert('success', 'Friend added successfully!');
+                } else {
+                    button.innerHTML = '<i class="fas fa-user-plus me-1"></i>Add Friend';
+                    button.disabled = false;
+
+                    // Show error message
+                    showAlert('danger', data ? data.message : 'Failed to add friend');
+                }
+            })
+            .catch(error => {
+                console.error('AJAX failed, trying form submission fallback:', error);
+                fallbackToFormSubmission(username, button);
+            });
+    }
+
+    function fallbackToFormSubmission(username, button) {
+        // Create and submit a form for the existing POST endpoint
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/users/${username}/add-friend`;
+
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = token;
+        form.appendChild(csrfInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function showAlert(type, message) {
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        // Insert at top of container
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Check friendship status on page load and update buttons accordingly
+    document.addEventListener('DOMContentLoaded', function() {
+        const friendButtons = document.querySelectorAll('.friend-btn[data-user-id]');
+
+        friendButtons.forEach(button => {
+            const userId = button.getAttribute('data-user-id');
+
+            // Try to get friendship status via REST API
+            fetch(`/api/friends/status/${userId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    [header]: token
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    // If REST endpoint doesn't exist, silently fail
+                    return null;
+                })
+                .then(data => {
+                    if (data && data.areFriends) {
+                        button.innerHTML = '<i class="fas fa-check me-1"></i>Friends';
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-secondary');
+                        button.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    // Silently fail if REST endpoints don't exist yet
+                    console.log('REST API not available yet, using form fallback');
+                });
+        });
+    });
+</script>
 </body>
 </html>
