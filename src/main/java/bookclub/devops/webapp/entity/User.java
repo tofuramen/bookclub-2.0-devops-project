@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "app_user")
 public class User {
 
     @Id

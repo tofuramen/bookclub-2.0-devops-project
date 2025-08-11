@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "posts")
+@Table(name = "post")
 public class Post {
 
     @Id

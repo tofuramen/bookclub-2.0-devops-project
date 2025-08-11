@@ -18,3 +18,20 @@
 
 hs_err_pid*
 replay_pid*
+
+# Environment variables - NEVER commit these!
+.env
+.env.local
+.env.production
+.env.staging
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+
+# Database
+data/
+postgres_data/
