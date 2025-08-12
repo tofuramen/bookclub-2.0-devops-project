@@ -35,3 +35,60 @@ logs/
 # Database
 data/
 postgres_data/
+
+# Terraform - Add this section to your .gitignore
+
+# Terraform state files (CRITICAL - contains secrets!)
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfstate.*.backup
+.terraform.tfstate.lock.info
+
+# Terraform directory
+.terraform/
+.terraform.lock.hcl
+
+# Terraform variable files (contains secrets)
+terraform.tfvars
+*.tfvars
+terraform.tfvars.json
+*.tfvars.json
+
+# Terraform plan files
+*.tfplan
+tfplan
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Terraform override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform CLI configuration files
+.terraformrc
+terraform.rc
+
+# Environment files (existing section - keep these)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Docker (existing section - keep these)
+docker-compose.override.yml
+logs/
+*.log
+data/
+postgres_data/
+
+# AWS (if you have local AWS config)
+.aws/credentials
+.aws/config
+
+# Terraform reference files (if you created any)
+secrets-reference.txt
+.env.production

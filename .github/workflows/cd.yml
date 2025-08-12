@@ -1,0 +1,178 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    branches: [ main ]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Install kubectl and Helm
+      run: |
+        # Install kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+        
+        # Install Helm
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        
+        # Verify installations
+        kubectl version --client
+        helm version
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name bookclub
+
+    - name: Create environment configmap
+      run: |
+        kubectl create configmap app-config \
+          --from-literal=DB_HOST=${{ secrets.RDS_ENDPOINT }} \
+          --from-literal=DB_PORT=5432 \
+          --from-literal=DB_NAME=bookclub \
+          --from-literal=DB_USERNAME=bookclub_user \
+          --from-literal=SPRING_PROFILES_ACTIVE=production \
+          --from-literal=SERVER_PORT=8080 \
+          --from-literal=LOG_LEVEL=INFO \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Create secrets
+      run: |
+        kubectl create secret generic app-secrets \
+          --from-literal=DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          --from-literal=JWT_SECRET=${{ secrets.JWT_SECRET }} \
+          --from-literal=ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Deploy to EKS
+      run: |
+        export IMAGE_TAG=${{ github.sha }}
+        export ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+        export ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
+        
+        # Replace image tag in deployment manifest
+        envsubst < k8s/deployment.yml | kubectl apply -f -
+        
+        # Apply other Kubernetes manifests
+        kubectl apply -f k8s/service.yml
+        kubectl apply -f k8s/ingress.yml
+
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/bookclub-app --timeout=300s
+
+    - name: Deploy monitoring stack
+      run: |
+        # Add Prometheus Helm repository
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+        
+        # Deploy complete monitoring stack (Prometheus + Grafana + AlertManager)
+        helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+          --namespace monitoring \
+          --create-namespace \
+          --set grafana.adminPassword=${{ secrets.GRAFANA_PASSWORD }} \
+          --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+          --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false \
+          --set grafana.service.type=LoadBalancer \
+          --set prometheus.service.type=LoadBalancer \
+          --wait \
+          --timeout=600s
+          
+        echo "✅ Monitoring stack deployed successfully!"
+        
+        # Wait for LoadBalancers to get external IPs
+        echo "⏳ Waiting for LoadBalancer external IPs..."
+        sleep 60
+        
+        # Get monitoring URLs
+        GRAFANA_URL=$(kubectl get svc monitoring-grafana -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
+        PROMETHEUS_URL=$(kubectl get svc monitoring-kube-prometheus-prometheus -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
+        
+        echo "📊 Grafana Dashboard: http://$GRAFANA_URL:3000"
+        echo "🔍 Prometheus: http://$PROMETHEUS_URL:9090"
+        echo "👤 Grafana Login: admin / ${{ secrets.GRAFANA_PASSWORD }}"
+
+    - name: Get deployment status and monitoring URLs
+      run: |
+        echo "🚀 Application Status:"
+        kubectl get pods -l app=bookclub-app
+        kubectl get svc bookclub-service
+        
+        echo ""
+        echo "📊 Monitoring Status:"
+        kubectl get pods -n monitoring
+        
+        # Get final URLs
+        APP_URL=$(kubectl get svc bookclub-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
+        GRAFANA_URL=$(kubectl get svc monitoring-grafana -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
+        PROMETHEUS_URL=$(kubectl get svc monitoring-kube-prometheus-prometheus -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
+        
+        echo ""
+        echo "🌐 Access URLs:"
+        echo "📱 BookClub App: http://$APP_URL"
+        echo "📊 Grafana: http://$GRAFANA_URL:3000 (admin / [GRAFANA_PASSWORD])"
+        echo "🔍 Prometheus: http://$PROMETHEUS_URL:9090"
+        echo "📈 App Metrics: http://$APP_URL/actuator/prometheus"
+
+    - name: Run smoke tests
+      run: |
+        # Get the service URL
+        EXTERNAL_IP=$(kubectl get svc bookclub-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        
+        # Wait for load balancer
+        echo "⏳ Waiting for load balancer..."
+        sleep 60
+        
+        # Test health endpoint
+        echo "🏥 Testing health endpoint..."
+        curl -f http://$EXTERNAL_IP/actuator/health || exit 1
+        echo "✅ Health check passed"
+        
+        # Test login page
+        echo "🔐 Testing login page..."
+        curl -f http://$EXTERNAL_IP/login || exit 1
+        echo "✅ Login page accessible"
+        
+        # Test Prometheus metrics
+        echo "📊 Testing metrics endpoint..."
+        curl -f http://$EXTERNAL_IP/actuator/prometheus || exit 1
+        echo "✅ Metrics endpoint working"
+        
+        # Test Grafana (if available)
+        GRAFANA_URL=$(kubectl get svc monitoring-grafana -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
+        if [ ! -z "$GRAFANA_URL" ]; then
+          echo "📈 Testing Grafana..."
+          curl -f http://$GRAFANA_URL:3000/login || echo "⚠️ Grafana not ready yet"
+        fi
+
+    - name: Notify deployment
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "🚀 Deployment successful!"
+        else
+          echo "❌ Deployment failed!"
+        fi
