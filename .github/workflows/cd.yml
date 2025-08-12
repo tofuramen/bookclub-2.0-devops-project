@@ -44,7 +44,7 @@ jobs:
 
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name bookclub
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name bookclub-cluster
 
       - name: Create environment configmap
         run: |
