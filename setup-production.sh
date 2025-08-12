@@ -32,9 +32,9 @@ SHOW_SQL=false
 DB_POOL_SIZE=50
 EOF
 
-echo "✅ Production .env file created with secure passwords"
-echo "🔐 Admin password: ${ADMIN_PASSWORD}"
-echo "📝 Save this password securely!"
+echo "Production .env file created with secure passwords"
+echo "Admin password: ${ADMIN_PASSWORD}"
+echo "Save this password securely!"
 echo ""
 echo "To start the application:"
 echo "docker-compose up -d --build"
